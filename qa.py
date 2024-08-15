@@ -39,3 +39,47 @@ def create_context(
 
     # Return the context
     return "\n\n###\n\n".join(returns)
+
+def answer_question(
+    df,
+    model="gpt-3.5-turbo",
+    question="Am I allowed to publish model outputs to Twitter, without a human review?",
+    max_len=1800,
+    size="ada",
+    debug=False,
+    max_tokens=150,
+    stop_sequence=None
+):
+    """
+    Answer a question based on the most similar context from the dataframe texts
+    """
+    context = create_context(
+        question,
+        df,
+        max_len=max_len,
+        size=size,
+    )
+    # If debug, print the raw model response
+    if debug:
+        print("Context:\n" + context)
+        print("\n\n")
+
+    try:
+        # Create a chat completion using the question and context
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Answer the question based on the context below, and if the question can't be answered based on the context, say \"I don't know\"\n\n"},
+                {"role": "user", f"content": "Context: {context}\n\n---\n\nQuestion: {question}\nAnswer:"}
+            ],
+            temperature=0,
+            max_tokens=max_tokens,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=stop_sequence,
+        )
+        return response.choices[0].message.strip()
+    except Exception as e:
+        print(e)
+        return ""
