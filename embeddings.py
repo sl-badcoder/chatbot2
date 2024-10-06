@@ -1,17 +1,5 @@
-import requests
-import re
-import urllib.request
-from bs4 import BeautifulSoup
-from collections import deque
-from html.parser import HTMLParser
-from urllib.parse import urlparse
 import os
-
-# Regex pattern to match a URL
-HTTP_URL_PATTERN = r'^http[s]*://.+'
-
-domain = "openai.com" # <- put your domain to be crawled
-full_url = "https://openai.com/" # <- put your domain to be crawled with https or http
+from all import *
 
 def remove_newlines(serie):
     serie = serie.str.replace('\n', ' ')
@@ -19,7 +7,6 @@ def remove_newlines(serie):
     serie = serie.str.replace('  ', ' ')
     serie = serie.str.replace('  ', ' ')
     return serie
-
 import pandas as pd
 
 # Create a list to store the text files
@@ -42,7 +29,6 @@ df = pd.DataFrame(texts, columns = ['fname', 'text'])
 df['text'] = df.fname + ". " + remove_newlines(df.text)
 df.to_csv('processed/scraped.csv')
 df.head()
-
 import tiktoken
 
 # Load the cl100k_base tokenizer which is designed to work with the ada-002 model
@@ -56,7 +42,6 @@ df['n_tokens'] = df.text.apply(lambda x: len(tokenizer.encode(x)))
 
 # Visualize the distribution of the number of tokens per row using a histogram
 df.n_tokens.hist()
-
 max_tokens = 500
 
 # Function to split the text into chunks of a maximum number of tokens
@@ -111,3 +96,14 @@ for row in df.iterrows():
     # Otherwise, add the text to the list of shortened texts
     else:
         shortened.append( row[1]['text'] )
+
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
+
+df['embeddings'] = df.text.apply(lambda x: client.embeddings.create(input=x, engine='text-embedding-ada-002')['data'][0]['embedding'])
+
+df.to_csv('processed/embeddings.csv')
+df.head()

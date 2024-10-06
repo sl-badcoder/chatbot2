@@ -1,12 +1,14 @@
-import numpy as np
+from all import *
+from embeddings import *
 import pandas as pd
+
+import numpy as np
 from openai.embeddings_utils import distances_from_embeddings
 
 df=pd.read_csv('processed/embeddings.csv', index_col=0)
 df['embeddings'] = df['embeddings'].apply(eval).apply(np.array)
 
 df.head()
-
 def create_context(
     question, df, max_len=1800, size="ada"
 ):
@@ -39,7 +41,6 @@ def create_context(
 
     # Return the context
     return "\n\n###\n\n".join(returns)
-
 def answer_question(
     df,
     model="gpt-3.5-turbo",
